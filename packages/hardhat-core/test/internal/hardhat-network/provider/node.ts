@@ -338,7 +338,10 @@ describe("HardhatNode", () => {
         assert.equal(block.header.gasUsed, 42_000n);
       });
 
-      it("assigns miner rewards", async () => {
+      // TODO: skipped because miner rewards are not assigned after the merge
+      // hardfork, but we should keep this test and run it with a pre-merge
+      // hardfork
+      it.skip("assigns miner rewards", async () => {
         const gasPriceBN = 1n;
 
         let baseFeePerGas = 0n;
@@ -723,21 +726,32 @@ describe("HardhatNode", () => {
         chainId: 1,
       },
       {
+        networkName: "mainnet",
+        url: INFURA_URL,
+        blockToRun: 17_050_001n, // post-shanghai
+        chainId: 1,
+      },
+      {
         networkName: "goerli",
         url: INFURA_URL.replace("mainnet", "goerli"),
         blockToRun: 7728449n, // this block has both EIP-2930 and EIP-1559 txs
         chainId: 5,
       },
+      {
+        networkName: "sepolia",
+        url: INFURA_URL.replace("mainnet", "sepolia"),
+        blockToRun: 3095000n, // this block is post-shanghai
+        chainId: 11155111,
+      },
     ];
 
     for (const { url, blockToRun, networkName, chainId } of forkedBlocks) {
       const remoteCommon = new Common({ chain: chainId });
-      const hardfork = remoteCommon.getHardforkByBlockNumber(blockToRun);
 
-      it(`should run a ${networkName} block from ${hardfork} and produce the same results`, async function () {
+      it(`should run ${networkName} block ${blockToRun} and produce the same results`, async function () {
         this.timeout(240000);
 
-        await runFullBlock(url, blockToRun, chainId, hardfork);
+        await runFullBlock(url, blockToRun, chainId, remoteCommon);
       });
     }
   });
